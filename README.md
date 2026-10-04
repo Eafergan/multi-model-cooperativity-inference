@@ -5,6 +5,7 @@
 
 - [Overview](#overview)
 - [Goal](#goal)
+- [Scientific Context](#scientific-context)
 - [Computational Pipeline](#computational-pipeline)
 - [Statistical-Mechanics Modeling](#statistical-mechanics-modeling)
 - [Joint Multi-State Fitting](#joint-multi-state-fitting)
@@ -13,7 +14,7 @@
 - [Results](#results)
 - [Key Findings](#key-findings)
 - [Repository Structure](#repository-structure)
-- [Scientific Context](#scientific-context)
+
 
 ---
 
