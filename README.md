@@ -24,6 +24,8 @@ This project develops a quantitative framework for inferring **cooperative prote
 
 To fit the model parameters, I implemented a **vectorized grid-search approach** that evaluates parameter combinations within specified ranges. The resulting fit is used to quantify binding cooperativity and evaluate the uncertainty of the inferred parameters through parallel statistical resampling (**bootstrap**).
 
+I also analyzed protein–DNA complex half-lives by fitting exponential decay curves to cold-competitor EMSA data, as presented in Figure 2 of the same paper. The code and explanation are available in my [EMSA-Kuang-et-al](https://github.com/Eafergan/EMSA-Kuang-et-al) repository, originally linked from the publication.
+
 ## Goal
 
 The goal of this project is to **extract a quantitative measure of binding cooperativity from EMSA data** by fitting the experimental measurements to a statistical-mechanics model.

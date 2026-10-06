@@ -1,3 +1,4 @@
+% Fit the three occupancy states and estimate parameter uncertainty by bootstrap.
 clear all;
 
 %This code generate random sets of data (using the Boot_S_Fit function) to fit, based on the data sets from observation 
@@ -9,8 +10,10 @@ clear all;
 %the 3 variable are in range and if one of them is maxed out so adjust the
 %range
 %
+% Su(H) concentrations in nM, with four repeats at each concentration.
 SuConc= [2.50000000000000;2.50000000000000;2.50000000000000;2.50000000000000;10;10;10;10;40;40;40;40;160;160;160;160];
 
+% Rows are the 0-, 1-, and 2-bound states; columns match SuConc.
 SuAloneCSL=[0.545249786228123,0.546166270401319,0.517765436522022,0.483750263445663,0.246609877518646,0.250198551190367,0.226187190409220,0.250834473705899,0.122343994543396,0.140065078243236,0.108941241966686,0.137221866472578,0.0710222680509683,0.0998918757321835,0.0580550401825572,0.0870017091186934;0.410153595596077,0.412101178547835,0.428636799638404,0.448181006217949,0.506780386494257,0.498526109161292,0.510717133817494,0.496886262040477,0.483555227995975,0.477689350111376,0.497649580485387,0.466139232474806,0.438047074549976,0.430860371775534,0.451628181616717,0.436303206110425;0.0445966181758008,0.0417325510508459,0.0535977638395739,0.0680687303363884,0.246609735987097,0.251275339648341,0.263095675773287,0.252279264253624,0.394100777460630,0.382245571645389,0.393409177547926,0.396638901052616,0.490930657399056,0.469247752492283,0.490316778200726,0.476695084770882];
 SuHCSL=[0.558881427637718,0.562661395910912,0.573161817486308,0.500182581343826,0.274849227839397,0.300228811140753,0.283927349532005,0.266533619348185,0.157623249519112,0.189697106066217,0.170067266463168,0.145671141623194,0.0751184595578876,0.104738222133878,0.0914918367382075,0.0769780664043888;0.421953673262292,0.414151992964862,0.404781744489432,0.460150769159152,0.576054611494268,0.546472236768704,0.555441594939554,0.567965818549282,0.549419345079403,0.537816048189416,0.534696374420060,0.544698525208513,0.467848653012233,0.455626189148864,0.470764773444766,0.461744684659595;0.0191648990999895,0.0231866111242262,0.0220564380242601,0.0396666494970222,0.149096160666335,0.153298952090543,0.160631055528441,0.165500562102533,0.292957405401486,0.272486845744367,0.295236359116773,0.309630333168293,0.457032887429880,0.439635588717258,0.437743389817026,0.461277248936016];
 NCMCSL=[0.521494790976041,0.517759274467774,0.520584017310076,0.492424787697724,0.304712168332083,0.350377451454960,0.335722629079946,0.289902535300048,0.185522483692880,0.225650678857885,0.211842968693699,0.183435194357907,0.151012873073741,0.183563052613792,0.172758364883362,0.141263178589461;0.371863564387684,0.380614244626900,0.367807127164924,0.376566677907729,0.562604340095156,0.523511278982543,0.530277531419885,0.556573565585562,0.593732791577540,0.560665380085759,0.559303556613926,0.558424408827786,0.525991741227660,0.532211852317592,0.522283450955586,0.534143663464959;0.106641644636274,0.101626480905325,0.111608855525000,0.131008534394547,0.132683491572761,0.126111269562497,0.133999839500169,0.153523899114391,0.220744724729580,0.213683941056356,0.228853474692375,0.258140396814308,0.322995385698598,0.284225095068616,0.304958184161052,0.324593157945581];
@@ -23,11 +26,13 @@ runs=1000;
 
 TheList=zeros(3,runs);
 
+% Choose the condition to fit; adjust the parameter ranges inside Boot_S_Fit.
 SetToFit2=SuAloneCSL;
 
 RanGenMean=zeros(3,16);
 RanGenSD=zeros(3,16);
 
+% Get the mean and SD across the four repeats for each state and concentration.
 for i=1:3
 RanGenMean(i,1:4)=mean(SetToFit2(i,1:4));
 RanGenMean(i,5:8)=mean(SetToFit2(i,5:8));
@@ -43,6 +48,7 @@ Klist=zeros(1,runs);
 C1list=zeros(1,runs);
 Flist=zeros(1,runs);
 
+% Draw and fit 1,000 synthetic datasets independently in parallel.
 parfor i=1:runs
 RanMat = RanGenSD.*randn(3,16) + RanGenMean;
 [Kdi,C1i,Fi] = Boot_S_Fit(RanMat);
@@ -53,10 +59,12 @@ Flist(i)=Fi;
 end
 
 
+% Store Kd, cooperativity, and f in rows, with one column per bootstrap fit.
 TheList(1,:)=Klist;
 TheList(2,:)=C1list;
 TheList(3,:)=Flist;
 
+% Inspect the distributions and adjust the search ranges if values pile up at an edge.
 figure
 hist(Klist);
 title('K');
@@ -70,10 +78,12 @@ hist(C1list);
 title('C')
 
 
+% Use the median of each fitted parameter distribution.
 p50k=prctile(TheList(1,:),50);
 p50C=prctile(TheList(2,:),50);
 p50F=prctile(TheList(3,:),50);
 
+% These summaries are half the 5th-to-95th percentile span, a central 90% range.
 plusminusC=0.5*(prctile(TheList(2,:),95)-prctile(TheList(2,:),5));
 plusminusK=0.5*(prctile(TheList(1,:),95)-prctile(TheList(1,:),5));
 plusminusF=0.5*(prctile(TheList(3,:),95)-prctile(TheList(3,:),5));
@@ -81,7 +91,8 @@ plusminusF=0.5*(prctile(TheList(3,:),95)-prctile(TheList(3,:),5));
 
 function [Kd,C1,F]=Boot_S_Fit(SetToFit)
  
-%1-f squere
+% Model weights: 1-2*f-f^2 for two available sites, 2*f for one, f^2 for none.
+% A concentration column times an inverse-Kd row gives a matrix of binding weights.
 Alpha=@(Kd,x)  (x*(1./Kd));
 fnc0=@(c1,Kd,f,x)(  (1-2.*f-f.^2).*(1./(1 + 2.*Alpha(Kd,x) + c1.*(Alpha(Kd,x).^2))) + (2.*f).*(1./(1 + Alpha(Kd,x))) + f.^2) ; 
 fnc1=@(c1,Kd,f,x)(  (1-2.*f-f.^2).*((2.*Alpha(Kd,x))./(1 + 2.*Alpha(Kd,x) + c1.*(Alpha(Kd,x).^2))) + (2.*f).*((Alpha(Kd,x))./(1 + Alpha(Kd,x))) ) ; 
@@ -93,21 +104,26 @@ SuConc=[2.5 2.5 2.5 2.5 10 10 10 10 40 40 40 40 160 160 160 160]';
 
 %f for sps 0.77 for CSL 0.6
 
+% Candidate values for cooperativity, unavailable-site parameter, and Kd.
 C1m=single(0.4:0.1:2);
 fm=single(0.18:0.01:0.35);
 Kdm=single(3:0.1:10);
 
+% Array axes are measurement, Kd, cooperativity, and f.
 C1m2=single(ones(1,1,length(C1m)));
 fm2=single(ones(1,1,1,length(fm)));
 
+% Place cooperativity values along the third axis.
 for c=1:length(C1m)
     C1m2(1,1,c)=C1m(c);
 end
 
+% Place f values along the fourth axis.
 for f=1:length(fm)
     fm2(1,1,1,f)=fm(f);
 end
 
+% Repeat each measured state across the parameter grid to match the model arrays.
 SetToFitM0=Alpha(ones(1,length(Kdm)),SetToFit(1,:)');
 SetToFitM0=SetToFitM0.*ones(1,1,length(C1m));
 SetToFitM0=SetToFitM0.*ones(1,1,1,length(fm));
@@ -118,9 +134,11 @@ SetToFitM2=Alpha(ones(1,length(Kdm)),SetToFit(3,:)');
 SetToFitM2=SetToFitM2.*ones(1,1,length(C1m));
 SetToFitM2=SetToFitM2.*ones(1,1,1,length(fm));
 
+% Sum squared errors over all measurements and states, leaving one loss per Kd, C, f.
 leastSqM=squeeze(sum((SetToFitM0-fnc0(C1m2,Kdm,fm2,SuConc)).^2)+sum((SetToFitM1-fnc1(C1m2,Kdm,fm2,SuConc)).^2)+sum((SetToFitM2-fnc2(C1m2,Kdm,fm2,SuConc)).^2));
 
 
+% Find the smallest loss and convert its array indices back to parameter values.
 [mxv,idx] = max(1./leastSqM(:));
 [Kdind,Cind,Find] = ind2sub(size(leastSqM),idx);
 C1=C1m(Cind);
